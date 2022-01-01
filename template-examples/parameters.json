@@ -1,0 +1,54 @@
+[
+  {
+    "ParameterKey": "userPoolName",
+    "ParameterValue": "todoapp"
+  },
+  {
+    "ParameterKey": "snsRoleName",
+    "ParameterValue": "todosnsrole"
+  },
+  {
+    "ParameterKey": "snsPolicyName",
+    "ParameterValue": "todosnspolicy"
+  },
+  {
+    "ParameterKey": "autoVerifiedAttributes",
+    "ParameterValue": "email"
+  },
+  {
+    "ParameterKey": "mfaConfiguration",
+    "ParameterValue": "OFF"
+  },
+  {
+    "ParameterKey": "passwordPolicyMinLength",
+    "ParameterValue": "8"
+  },
+  {
+    "ParameterKey": "usernameAttributes",
+    "ParameterValue": "email"
+  },
+  {
+    "ParameterKey": "smsAuthenticationMessage",
+    "ParameterValue": "Your authentication code is {####}"
+  },
+  {
+    "ParameterKey": "smsVerificationMessage",
+    "ParameterValue": "Your verification code is {####}"
+  },
+  {
+    "ParameterKey": "emailVerificationSubject",
+    "ParameterValue": "Your verification code"
+  },
+  {
+    "ParameterKey": "emailVerificationMessage",
+    "ParameterValue": "Your verification code is {####}"
+  },
+  {
+    "ParameterKey": "userpoolClientRefreshTokenValidity",
+    "ParameterValue": "30"
+  },
+  {
+    "ParameterKey": "userpoolClientGenerateSecret",
+    "ParameterValue": "false"
+  }
+]
