@@ -1,5 +1,13 @@
 [
   {
+    "ParameterKey": "hostingBucketName",
+    "ParameterValue": "todo-app.com"
+  },
+  {
+    "ParameterKey": "artifactsBucketName",
+    "ParameterValue": "todoappartifacts"
+  },
+  {
     "ParameterKey": "userPoolName",
     "ParameterValue": "todoapp"
   },
@@ -50,5 +58,9 @@
   {
     "ParameterKey": "userpoolClientGenerateSecret",
     "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "apiGatewayDeployment",
+    "ParameterValue": "Prod"
   }
 ]
