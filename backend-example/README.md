@@ -17,14 +17,14 @@ aws s3api put-object --bucket todoappartifacts --key todo-users-zip --region us-
 Once done you can create the task using the following command
 
 ```javascript
-aws cloudformation create-stack --stack-name todobackend --template-body file://backend.yml --parameters file://backend-parameters.json   
+aws cloudformation create-stack --stack-name todobackend --template-body file://backend.yml --parameters file://backend-parameters.json --capabilities CAPABILITY_NAMED_IAM  
 
 ```
 
 While to update the stack use the following command
 
 ```javascript
-aws cloudformation update-stack --stack-name todobacked --template-body file://backend.yml --parameters file://backend-parameters.json   
+aws cloudformation update-stack --stack-name todobacked --template-body file://backend.yml --parameters file://backend-parameters.json  --capabilities CAPABILITY_NAMED_IAM 
 ```
 
 You can describe the stack events you have created as follows: 
