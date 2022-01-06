@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This template will create s3 bucket when provided with the required parameters.
+  By default the bucket will have full owner control and bucket name must be provided 
+  before this template is used.
+
+Parameters:
+  hostingBucketName:
+    Description: Provide a unique bucket name for website bucket.
+    Type: String
+    Default: ""
+
+  artifactsBucketName:
+    Description: Provide a unique bucket name for artifacts bucket.
+    Type: String
+    Default: ""
+
+  accessControl:
+    Description: Provide the access control for the bucket either of the following Private | PublicRead | PublicReadWrite | AuthenticatedRead | LogDeliveryWrite | BucketOwnerRead | BucketOwnerFullControl
+    Type: String
+    Default: BucketOwnerFullControl
+
+Conditions:
+  CreateArtifactsBucket: !Not
+    - !Equals
+      - !Ref artifactsBucketName
+      - ""
+
+  CreateHostingBucket: !Not
+    - !Equals
+      - !Ref hostingBucketName
+      - ""
+
+Resources:
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateArtifactsBucket
+    Properties:
+      AccessControl: !Ref accessControl
+      BucketName: !Ref artifactsBucketName
+
+  HostingBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateHostingBucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Ref hostingBucketName
+      MetricsConfigurations:
+        - Id: EntireBucket
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+
+Outputs:
+  WebsiteURL:
+    Condition: CreateHostingBucket
+    Value: !GetAtt
+      - HostingBucket
+      - WebsiteURL
+    Description: URL for website hosted on S3
+
+  S3BucketSecureURL:
+    Condition: CreateHostingBucket
+    Value: !Join
+      - ""
+      - - "https://"
+        - !GetAtt
+          - HostingBucket
+          - DomainName
+    Description: Name of S3 bucket to hold website content
