@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This template will create aurora postgre database when provided with the required parameters.
+  The default deployment is Development which will deploy one instance. When Enviroment changed
+  to production then the deployment will provision two instances.
+
+Parameters:
+  Enviroment:
+    Description: The deployment enviroment
+    Type: String
+    Default: Development
+
+  DatabaseName:
+    Description: Database Name
+    Type: String
+    MinLength: "1"
+    MaxLength: "64"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+
+  DatabaseClusterIdentifier:
+    Description: Database Cluster Identifier
+    Type: String
+    MinLength: "1"
+    MaxLength: "63"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+
+  DatabaseUser:
+    NoEcho: "true"
+    Description: The database admin account username
+    Type: String
+    MinLength: "1"
+    MaxLength: "16"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+
+  DatabasePassword:
+    NoEcho: "true"
+    Description: The database admin account password
+    Type: String
+    MinLength: "8"
+    MaxLength: "41"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: must contain only alphanumeric characters.
+
+  DeletionProtection:
+    Description: The database deletion protection.
+    Type: String
+    Default: false
+
+  DBInstanceClass:
+    Description: The database instance type
+    Type: String
+    Default: db.t3.medium
+    AllowedValues:
+      - db.t3.medium
+      - db.t3.large
+      - db.t4g.medium
+      - db.t4g.large
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.8xlarge
+      - db.r5.12xlarge
+      - db.r5.16xlarge
+      - db.r5.24xlarge
+      - db.r6g.large
+      - db.r6g.xlarge  
+      - db.r6g.2xlarge
+      - db.r6g.4xlarge
+      - db.r6g.8xlarge
+      - db.r6g.12xlarge
+      - db.r6g.16xlarge
+      - db.r2g.large
+      - db.r2g.xlarge
+      - db.r2g.2xlarge
+      - db.r2g.4xlarge
+      - db.r2g.8xlarge
+      - db.r2g.12xlarge
+      - db.r2g.16xlarge
+    ConstraintDescription: must select a valid database instance type.
+
+
+Conditions:
+  CreateDatabase: !Not
+    - !Equals
+      - !Ref DatabaseName
+      - ""
+
+  CreateWhenEnviromentProduction: !Equals
+    - !Ref Enviroment
+    - Production
+
+Resources:
+  RDSAuroraCluster:
+    Type: "AWS::RDS::DBCluster"
+    Condition: CreateDatabase
+    Properties:
+      DatabaseName: !Ref DatabaseName
+      DeletionProtection: !Ref DeletionProtection
+      MasterUsername: !Ref DatabaseUser
+      MasterUserPassword: !Ref DatabasePassword
+      DBClusterIdentifier: !Ref DatabaseClusterIdentifier
+      Port: 5432
+      Engine: aurora-postgresql
+      EngineVersion: "12.7"
+      DBClusterParameterGroupName: default.aurora-postgresql12
+      EnableCloudwatchLogsExports:
+        - postgresql
+
+  RDSAuroraInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBInstanceIdentifier: aurora-postgresql-instance
+      Engine: aurora-postgresql
+      DBClusterIdentifier: !Ref RDSAuroraCluster
+      PubliclyAccessible: "true"
+      DBInstanceClass: !Ref DBInstanceClass
+  
+  RDSAuroraInstance2:
+    Type: "AWS::RDS::DBInstance"
+    Condition: CreateWhenEnviromentProduction
+    Properties:
+      DBInstanceIdentifier: aurora-postgresql-instance2
+      Engine: aurora-postgresql
+      DBClusterIdentifier: !Ref RDSAuroraCluster
+      PubliclyAccessible: "true"
+      DBInstanceClass: !Ref DBInstanceClass
+
+Outputs:
+  PostgreConnectionString:
+    Description: Postgre connection string for the master database
+    Value:
+      Fn::Join:
+        - ""
+        - - postgresql://
+          - Ref: DatabaseUser
+          - ":"
+          - Ref: DatabasePassword
+          - "@"
+          - Fn::GetAtt:
+              - RDSAuroraCluster
+              - Endpoint.Address
+          - ":"
+          - Fn::GetAtt:
+              - RDSAuroraCluster
+              - Endpoint.Port
+          - /
+          - Ref: DatabaseName
