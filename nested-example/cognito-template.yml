@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This template will create aurora postgre database when provided with the required parameters.
+  The default deployment is Development which will deploy one instance. When Enviroment changed
+  to production then the deployment will provision two instances.
+
+Parameters:
+  UserPoolName:
+    Description: The UserPool Name. This is a required property
+    Type: String
+
+  PasswordPolicyMinLength:
+    Description: The password policy minimum length.
+    Type: String
+    Default: '8'
+
+  EmailVerificationSubject:
+    Description: The email verification subject. This is sent with verification code.
+    Type: String
+    Default: "Your verification code"
+
+  EmailVerificationMessage:
+    Description: The email verification message. This is sent with verification code.
+    Type: String
+    Default: "Your verification code is {####}"
+
+  SmsAuthenticationMessage:
+    Description: The sms authentication message. This is sent with verification code.
+    Type: String
+    Default: "Your authentication code is {####}"
+
+  SmsVerificationMessage:
+    Description: The sms verification subject. This is sent with verification code.
+    Type: String
+    Default: "Your verification code is {####}"
+
+  AutoVerifiedAttributes:
+    Description: The auto verified attributes.
+    Type: CommaDelimitedList
+    Default: "email"
+
+  UsernameAttributes:
+    Description: The username attributes.
+    Type: CommaDelimitedList
+    Default: "email"
+
+  MfaConfiguration:
+    Description: The MFA Configuration. By default this is set OFF.
+    Type: String
+    Default: "OFF"
+
+  UserpoolClientGenerateSecret:
+    Description: The userpool client generated secret.
+    Type: String
+    Default: false
+
+  UserpoolClientRefreshTokenValidity:
+    Description: The userpool client refresh token validity.
+    Type: String
+    Default: "30"
+
+  UserPoolSchema:
+    Description: The userpool schema email | username.
+    Type: String
+    Default: "email"
+
+Conditions:
+  CreateCognitoUserPool: !Not
+    - !Equals
+      - !Ref UserPoolName
+      - ""
+
+Resources:
+  SNSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["", [!Ref UserPoolName, "-", "cognito_sns_role"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ""
+            Effect: "Allow"
+            Principal:
+              Service: "cognito-idp.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+      Policies:
+        - PolicyName: !Join ["", [!Ref UserPoolName, "-", "cognito_sns_policy"]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "sns:Publish"
+                Resource: "*"
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Condition: CreateCognitoUserPool
+    Properties:
+      UserPoolName: !Ref UserPoolName
+      UsernameConfiguration:
+        CaseSensitive: false
+      Schema:
+        - Name: !Ref UserPoolSchema
+          Required: true
+          Mutable: true
+      AutoVerifiedAttributes: !Ref AutoVerifiedAttributes
+      EmailVerificationMessage: !Ref EmailVerificationMessage
+      EmailVerificationSubject: !Ref EmailVerificationSubject
+      Policies:
+        PasswordPolicy:
+          MinimumLength: !Ref PasswordPolicyMinLength
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+      UsernameAttributes: !Ref UsernameAttributes
+      MfaConfiguration: !Ref MfaConfiguration
+      SmsVerificationMessage: !Ref SmsVerificationMessage
+      SmsAuthenticationMessage: !Ref SmsAuthenticationMessage
+      SmsConfiguration:
+        SnsCallerArn: !GetAtt SNSRole.Arn
+
+  UserPoolClientWeb:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Join ["", [!Ref UserPoolName, "-", "clientweb"]]
+      RefreshTokenValidity: !Ref UserpoolClientRefreshTokenValidity
+      UserPoolId: !Ref UserPool
+    DependsOn: UserPool
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Join ["", [!Ref UserPoolName, "-", "client"]]
+      GenerateSecret: !Ref UserpoolClientGenerateSecret
+      RefreshTokenValidity: !Ref UserpoolClientRefreshTokenValidity
+      UserPoolId: !Ref UserPool
+    DependsOn: UserPool
+
+Outputs:
+  UserPoolId:
+    Value: !Ref "UserPool"
+    Description: Id for the user pool
+
+  UserPoolName:
+    Value: !Ref UserPoolName
+
+  AppClientIDWeb:
+    Value: !Ref "UserPoolClientWeb"
+    Description: The user pool app client id for web
+
+  AppClientID:
+    Value: !Ref "UserPoolClient"
+    Description: The user pool app client id
