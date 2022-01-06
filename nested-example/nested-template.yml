@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation nested stack.
+
+Resources:
+  ArtifactsBucket:
+    Type: "AWS::CloudFormation::Stack"
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: https://modules-templates.s3.amazonaws.com/s3-storage
+      Parameters:
+        artifactsBucketName: "nestedtodoappartifacts"
+
+  HostingBucket:
+    Type: "AWS::CloudFormation::Stack"
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: https://modules-templates.s3.amazonaws.com/s3-storage
+      Parameters:
+        hostingBucketName: "nestedtodoapp.com"
+
+  RdsDatabase:
+    Type: "AWS::CloudFormation::Stack"
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: https://modules-templates.s3.amazonaws.com/rds-database
+      Parameters:
+        DatabaseName: "nesteddatabasename"
+        DatabaseClusterIdentifier: "nestedcluster"
+        DatabaseUser: "nesteduser"
+        DatabasePassword: "bgtadzbeyghoonltasmikntehyaopzgpf"
+
+  Cognito:
+    Type: "AWS::CloudFormation::Stack"
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: https://modules-templates.s3.amazonaws.com/auth-cognito
+      Parameters:
+        UserPoolName: "nestedUserpool"
